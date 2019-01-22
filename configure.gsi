@@ -1,0 +1,121 @@
+SHELL                   =       /bin/sh
+
+# Listing of options that are usually independent of machine type.
+# When necessary, these are over-ridden by each architecture.
+
+#### Architecture specific settings ####
+
+# Settings for Linux x86_64, GNU compilers (gfortran & gcc)  (dmpar,optimize)#
+LDFLAGS        =  -Wl,-noinhibit-exec
+OMP            =  -fopenmp
+COREDIR        =  /data/common/min.shao/software_self_support/comGSIv3.6_EnKFv1.2/dtc
+INC_DIR        =  $(COREDIR)/include
+SFC            =  gfortran
+SF90           =  gfortran -ffree-form -ffree-line-length-none
+SCC            =  gcc
+INC_FLAGS      =  -I$(INC_DIR) -I$(INC_DIR) -I/data/common/min.shao/local_self_support/libs/gnu-8.2.0/netcdf-4.1.2/include
+FFLAGS_i4r4    =
+FFLAGS_i4r8    =  -fdefault-real-8
+FFLAGS_i8r8    =  -fdefault-integer-8 -fdefault-real-8
+FFLAGS_DEFAULT =  -fno-second-underscore -fno-range-check -fconvert=big-endian -frecord-marker=4 -std=legacy -Wargument-mismatch
+#FFLAGS_DEBUG   =  -O0 -q -C
+#FFLAGS_OPT     =  -O3
+FFLAGS         =   $(FFLAGS_DEFAULT) $(INC_FLAGS) $(LDFLAGS)
+# Library build flags
+FFLAGS_BACIO   =  -O3 $(FFLAGS_DEFAULT)
+ARFLAGS_BACIO  =
+FFLAGS_BUFR    =  -O3 $(FFLAGS_DEFAULT) $(FFLAGS_i4r8)
+CFLAGS_BUFR    =  -O3 -DUNDERSCORE
+ARFLAGS_BUFR   =
+FFLAGS_CLOUD   =  -O3 $(FFLAGS_DEFAULT)
+FFLAGS_CRTM    =  -O3 $(FFLAGS_DEFAULT)
+LFLAGS_CRTM    =
+FFLAGS_GFSIO   =  -O3 $(FFLAGS_DEFAULT) $(FFLAGS_i4r4)
+ARFLAGS_GFSIO  =
+FFLAGS_SFCIO   =  -O3 $(FFLAGS_DEFAULT) $(FFLAGS_i4r4)
+FFLAGS_SIGIO   =  -O3 $(FFLAGS_DEFAULT) $(FFLAGS_i4r4)
+ARFLAGS_SIGIO  =
+FFLAGS_SP      =  -O3 $(FFLAGS_DEFAULT) $(FFLAGS_i4r8)
+FFLAGS_W3      =  -O3 $(FFLAGS_DEFAULT)
+#
+CPP            =  cpp
+CPP_FLAGS      =  -P -D_REAL8_ -DWRF -DLINUX -DPGI
+CPP_F90FLAGS   =  -traditional-cpp
+
+DM_FC          =  mpif90 -O3
+DM_F90         =  mpif90 -O3 -ffree-form -ffree-line-length-none -std=legacy
+DM_CC          =  gcc
+
+FC             =  $(DM_FC)
+F90            =  $(DM_F90)
+CC             =  $(DM_CC)
+
+CFLAGS         =  -O0 -DLINUX -DUNDERSCORE
+CFLAGS2        =  -DLINUX -Dfunder -DFortranByte=char -DFortranInt=int -DFortranLlong='long long'
+
+
+MYLIBsys       =  -L$(LAPACK_PATH) -llapack -lrefblas
+NETCDF_PATH    =  -L/data/common/min.shao/local_self_support/libs/gnu-8.2.0/netcdf-4.1.2/lib
+
+
+###########################################################
+#
+#       Macros, these should be generic for all machines
+
+LN              =  ln -sf
+MAKE            =  make -i -r
+RM              =  /bin/rm -f
+CP              =  /bin/cp
+AR              =  ar
+MKDIR           =  /bin/mkdir -p
+
+WRF_INCLUDE     =  -I$(WRF_DIR)/frame
+
+WRF_LIB         =    $(WRF_DIR)/frame/module_internal_header_util.o \
+                     $(WRF_DIR)/frame/pack_utils.o \
+                     $(WRF_DIR)/frame/module_machine.o \
+                     $(WRF_DIR)/main/libwrflib.a \
+                     -L$(WRF_DIR)/external/io_int -lwrfio_int \
+                     -L$(WRF_DIR)/external/io_netcdf -lwrfio_nf
+
+
+WRF_LIB2        =
+NETCDFPATH      =  /data/common/min.shao/local_self_support/libs/gnu-8.2.0/netcdf-4.1.2
+NETCDFLIBS      =  -lnetcdff -lnetcdf $(NETCDF_PATH)
+WRF_DIR         =  /data/common/min.shao/software_self_support/WRF
+
+
+
+.IGNORE:
+.SUFFIXES: .c .f .F .F90 .f90 .o .fpp
+
+#       There is probably no reason to modify these rules
+
+.c.o:
+        $(RM) $@
+        $(CC) $(CFLAGS2) -c $<
+
+.f.o:
+        $(RM) $@ $*.mod
+        $(FC) $(FFLAGS) -c $<
+
+.fpp.o:
+        $(RM) $@ $*.mod $*.f
+        $(CPP) $(CPP_FLAGS) $< > $*.f
+        $(FC) $(FFLAGS) -c $*.f
+        $(RM) $*.f
+
+.F.o:
+        $(RM) $@ $*.mod
+        $(CPP) $(CPP_FLAGS) $< > $*.f90
+        $(F90) $(FFLAGS) -c $*.f90
+        $(RM) $*.f90
+        .F90.o:
+                $(RM) $@ $*.mod
+                $(CPP) $(CPP_FLAGS) $< > $*.f90
+                $(F90) $(FFLAGS) -c $*.f90
+                $(RM) $*.f90
+
+.f90.o:
+        $(RM) $@ $*.mod
+        $(F90) $(FFLAGS) -c $<
